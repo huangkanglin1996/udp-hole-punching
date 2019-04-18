@@ -33,6 +33,8 @@ public class Clent {
         String message = new String(dp.getData(), 0, dp.getLength());
         System.out.println("本机端口、IP" + message);
 
+
+        // 开启一个线程
         new Thread(
                 new DatagramSocketThread(ds)
         ).start();

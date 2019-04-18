@@ -4,6 +4,8 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @ClassName Server
@@ -12,6 +14,11 @@ import java.net.SocketAddress;
  * @Date 2019/4/17 10:20
  **/
 public class Server {
+
+    /**
+     * map
+     */
+    public static Map<String, String> map = new HashMap<>();
 
     public static void main(String[] args) throws Exception {
         String ip = "";
@@ -43,21 +50,30 @@ public class Server {
             ip = inetSocketAddress.getAddress().getHostAddress();
 
             if (message.startsWith("getIp")) {
+                // 第一次记录ip和端口
+                map.put(String.valueOf(prot), ip);
+
                 str = prot + "," + ip;
-                byte tmpBytes[] = str.getBytes();
+                byte[] tmpBytes = str.getBytes();
                 dp.setData(tmpBytes, 0, tmpBytes.length);
                 ds.send(dp);
                 System.out.println(prot + "," + ip);
             }
 
+            // 消息全部分发
             if (!message.equals("getIp")) {
-                str = "udp:ip=" + ip + "prot=" + prot + "massage=" + message;
-                byte[] reply = str.getBytes();
-                dp.setData(reply,0,reply.length);
-                ds.send(dp);
-                System.out.println("send massage="+str);
+                for (String tmpTargetPort : map.keySet()) {
+                    str = "udp:ip=" + map.get(tmpTargetPort) + "prot=" + tmpTargetPort + "massage=" + message;
+                    byte[] reply = str.getBytes();
+
+                    SocketAddress sa = new InetSocketAddress(map.get(tmpTargetPort), Integer.valueOf(tmpTargetPort));
+                    DatagramPacket target = new DatagramPacket(reply, 0, reply.length, sa);
+                    ds.send(target);
+
+                    System.out.println("send massage=" + str);
+                }
             }
-            dp.setData(bytes,0,bytes.length);
+            dp.setData(bytes, 0, bytes.length);
         }
 
     }
